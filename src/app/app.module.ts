@@ -5,6 +5,7 @@ import { HttpModule } from '@angular/http';
 
 import { InputsModule } from '@progress/kendo-angular-inputs';
 import { ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModule } from '@progress/kendo-angular-buttons';
+import { GridModule } from '@progress/kendo-angular-grid';
 
 import { MyAppComponent } from "./app.component";
 
@@ -18,7 +19,8 @@ import { MyAppComponent } from "./app.component";
         ReactiveFormsModule,
         HttpModule,
         InputsModule,
-        ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModule
+        ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModule,
+        GridModule
     ],
     bootstrap: [MyAppComponent]
 })
