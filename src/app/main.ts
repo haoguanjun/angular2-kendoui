@@ -1,16 +1,6 @@
-import "es6-shim";
-import "es6-promise";
-import "reflect-metadata";
-import "rxjs";
+import "./polyfill";
 
-import "jquery";
-import "kendoui";
-import "zone.js/dist/zone";
+import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { AppModule } from './app.module';
 
-// import 'tether';
-// import 'bootstrap';
-
-import { bootstrap } from '@angular/platform-browser-dynamic';
-import { MyAppComponent } from './app';
-
-bootstrap( MyAppComponent );
+platformBrowserDynamic().bootstrapModule(AppModule);
