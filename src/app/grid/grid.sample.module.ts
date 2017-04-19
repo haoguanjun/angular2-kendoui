@@ -1,37 +1,37 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, NgZone } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
-import { RouterModule } from '@angular/router';
+import { HttpModule,  Http, Jsonp, JsonpModule } from '@angular/http';
 
 import { InputsModule } from '@progress/kendo-angular-inputs';
 import { ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModule } from '@progress/kendo-angular-buttons';
 import { GridModule } from '@progress/kendo-angular-grid';
 
-import { MyAppComponent } from "./app.component";
-import { GridSampleModule } from './grid/grid.sample.module';
-import { AppRoutingModule } from './app.routers';
+import { GridSampleComponent } from "./grid.sample.component";
+import { EditService, MyEditService } from './edit.service';
 
 @NgModule({
     imports: [
         BrowserModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpModule,
-        RouterModule,
-        AppRoutingModule,
-        GridSampleModule,
-        InputsModule,
-        ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModule,
+        HttpModule, JsonpModule,
         GridModule
     ],
     declarations: [
-        MyAppComponent
+        GridSampleComponent
     ],
     providers: [
-         
+        {
+            provide: EditService,
+            deps: [Jsonp],
+            useFactory: (jsonp: Jsonp) => () => new EditService(jsonp)
+        },
+        MyEditService
     ],
-    bootstrap: [MyAppComponent]
+    exports: [
+        GridSampleComponent
+    ]
 })
-export class AppModule {
+export class GridSampleModule {
 }
