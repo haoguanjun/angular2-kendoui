@@ -7,7 +7,7 @@ import { GridDataResult } from '@progress/kendo-angular-grid';
 import { State, process } from '@progress/kendo-data-query';
 
 import { Product } from './model';
-import { EditService, MyEditService } from './edit.service';
+import { MyEditService } from './edit.service';
 
 @Component({
     selector: 'my-app',
@@ -50,12 +50,9 @@ export class GridSampleComponent implements OnInit {
         take: 10
     };
     public formGroup: FormGroup;
-
-    private editService: EditService;
     private editedRowIndex: number;
 
-    constructor( @Inject(EditService) editServiceFactory: any, private myService: MyEditService) {
-        this.editService = editServiceFactory();
+    constructor( private myService: MyEditService) {
     }
 
     public ngOnInit(): void {
@@ -63,7 +60,6 @@ export class GridSampleComponent implements OnInit {
         // this.view = this.editService.map(data => process(data, this.gridState));
 
         let data = this.myService.data();
-        console.log( data );
 
         let gridDataResult: DataResult = {
             data: data,
@@ -75,8 +71,6 @@ export class GridSampleComponent implements OnInit {
 
     public onStateChange(state: State) {
         this.gridState = state;
-
-        this.editService.read();
     }
 
     public selectionChangeHandler(event){
@@ -106,6 +100,7 @@ export class GridSampleComponent implements OnInit {
         console.log(dataItem);
         this.closeEditor(sender);
 
+        // 并没有绑定，直接创建了一个新的表单
         this.formGroup = new FormGroup({
             'ProductID': new FormControl(dataItem.ProductID),
             'ProductName': new FormControl(dataItem.ProductName, Validators.required),
@@ -136,13 +131,12 @@ export class GridSampleComponent implements OnInit {
     protected saveHandler({ sender, rowIndex, formGroup, isNew }) {
         // get data item by from group.
         const product: Product = formGroup.value;
-
-        this.editService.save(product, isNew);
+        this.myService.save(product, isNew);
 
         sender.closeRow(rowIndex);
     }
 
     protected removeHandler({ dataItem }) {
-        this.editService.remove(dataItem);
+        this.myService.remove(dataItem);
     }
 }

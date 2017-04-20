@@ -8,7 +8,7 @@ import { ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModu
 import { GridModule } from '@progress/kendo-angular-grid';
 
 import { GridSampleComponent } from "./grid.sample.component";
-import { EditService, MyEditService } from './edit.service';
+import { MyEditService } from './edit.service';
 
 @NgModule({
     imports: [
@@ -22,11 +22,6 @@ import { EditService, MyEditService } from './edit.service';
         GridSampleComponent
     ],
     providers: [
-        {
-            provide: EditService,
-            deps: [Jsonp],
-            useFactory: (jsonp: Jsonp) => () => new EditService(jsonp)
-        },
         MyEditService
     ],
     exports: [

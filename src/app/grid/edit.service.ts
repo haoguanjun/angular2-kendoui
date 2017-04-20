@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 import { Jsonp } from '@angular/http';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { DataResult } from '@progress/kendo-data-query';
 
 import { Model, IField, IModelOptions } from '../datasource/Model';
 import { DataSource } from '../datasource/datasource';
@@ -23,24 +24,27 @@ export class MyEditService extends BehaviorSubject<any[]> {
             idField: "ProductID",
             fields: {
                 "ProductID": {
-
+                    editable: true
                 },
                 "ProductName": {
                     type: "string",
                     defaultValue: "",
-                    editable: false
+                    editable: true
                 },
-                "Discountinued": {
+                "Discontinued": {
                     type: "boolean",
-                    defaultValue: false
+                    defaultValue: false,
+                    editable: true
                 },
                 "UnitsInStock": {
                     type: "number",
-                    defaultValue: 0
+                    defaultValue: 0,
+                    editable: true
                 },
                 "UnitPrice": {
                     type: "number",
-                    defaultValue: 0
+                    defaultValue: 0,
+                    editable: true
                 }
             }
         });
@@ -51,85 +55,40 @@ export class MyEditService extends BehaviorSubject<any[]> {
         this._ds = new DataSource<Product>(model);
 
         // add some item
-        let item: Product = { "ProductID": 2, "ProductName": "Chang", "UnitPrice": 19, "UnitsInStock": 17, "Discontinued": false };
+        let items: Array<Product> = [
+            { "ProductID": 1, "ProductName": "Chai", "UnitPrice": 18, "UnitsInStock": 39, "Discontinued": false },
+            { "ProductID": 2, "ProductName": "Chang", "UnitPrice": 19, "UnitsInStock": 17, "Discontinued": false },
+            { "ProductID": 77, "ProductName": "Original Frankfurter grüne Soße", "UnitPrice": 13, "UnitsInStock": 32, "Discontinued": false }
+        ]
 
-        this._ds.add({ "ProductID": 1, "ProductName": "Chai", "UnitPrice": 18, "UnitsInStock": 39, "Discontinued": false });
-        this._ds.add(item);
-        this._ds.add({ "ProductID": 77, "ProductName": "Original Frankfurter grüne Soße", "UnitPrice": 13, "UnitsInStock": 32, "Discontinued": false });
-
-        // remove a item
-        this._ds.remove( item );
-
-        console.log( this._ds.hasChanges() );
-
-        // cancel changes.
-        this._ds.cancelChanges();
+        this._ds.data(items);
     }
 
     public data(): Array<any> {
         return this._ds.data();
     }
-}
 
-@Injectable()
-export class EditService extends BehaviorSubject<any[]> {
-    constructor(private jsonp: Jsonp) {
-        super([]);
-    }
-
-    private data: any[] = [];
-
-    public read() {
-        if (this.data.length) {
-            return super.next(this.data);
-        }
-
-        this.fetch()
-            .do(data => this.data = data)
-            .subscribe(data => {
-                super.next(data);
-            });
-    }
-
-    public save(data: any, isNew?: boolean) {
+    public save(data: Product, isNew?: boolean) {
         const action = isNew ? CREATE_ACTION : UPDATE_ACTION;
 
-        this.reset();
+        if (isNew) {
+            this._ds.add(data);
+        }
+        else {
+            let target = this._ds.get(data.ProductID);
+            console.log( target );
+            Object.assign(target, data);
+        }
 
-        this.fetch(action, data)
-            .subscribe(() => this.read(), () => this.read());
+        console.log( this._ds );
     }
 
-    public remove(data: any) {
-        this.reset();
+    public remove(data: any): boolean {
+        let target = this._ds.get(data.ProductID);
+        if( !target ) {
+            return false;
+        }
 
-        this.fetch(REMOVE_ACTION, data)
-            .subscribe(() => this.read(), () => this.read());
-    }
-
-    public resetItem(dataItem: any) {
-        if (!dataItem) { return; }
-
-        //find orignal data item
-        const originalDataItem = this.data.find(item => item.ProductID === dataItem.ProductID);
-
-        //revert changes
-        Object.assign(originalDataItem, dataItem);
-
-        super.next(this.data);
-    }
-
-    private reset() {
-        this.data = [];
-    }
-
-    private fetch(action: string = "", data?: any): Observable<any[]> {
-        return this.jsonp
-            .get(`http://demos.telerik.com/kendo-ui/service/Products/${action}?callback=JSONP_CALLBACK${this.serializeModels(data)}`)
-            .map(response => response.json());
-    }
-
-    private serializeModels(data?: any): string {
-        return data ? `&models=${JSON.stringify([data])}` : '';
+        this._ds.remove( target );
     }
 }

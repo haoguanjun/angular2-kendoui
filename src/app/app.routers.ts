@@ -2,12 +2,13 @@ import { Routes, RouterModule } from '@angular/router';
 import { NgModule }     from '@angular/core';
 
 import { MyAppComponent } from './app.component';
+import { HomeComponent } from './home.component';
 import { GridSampleComponent } from './grid/grid.sample.component';
 
 @NgModule({
 	imports: [
 		RouterModule.forRoot([
-			{ path: '', component: MyAppComponent},
+			{ path: '', component: HomeComponent},
             { path: 'grid', component: GridSampleComponent }
 		])
 	],

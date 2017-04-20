@@ -9,6 +9,7 @@ import { ButtonsModule, ButtonGroupModule, DropDownButtonModule, SplitButtonModu
 import { GridModule } from '@progress/kendo-angular-grid';
 
 import { MyAppComponent } from "./app.component";
+import { HomeComponent } from './home.component';
 import { GridSampleModule } from './grid/grid.sample.module';
 import { AppRoutingModule } from './app.routers';
 
@@ -26,7 +27,8 @@ import { AppRoutingModule } from './app.routers';
         GridModule
     ],
     declarations: [
-        MyAppComponent
+        MyAppComponent,
+        HomeComponent
     ],
     providers: [
          

@@ -48,10 +48,16 @@ export interface IModelOptions {
 }
 
 export class Model {
+    static __uuid = 0;
+    static getUUID(){
+        return Model.__uuid++;
+    }
+
     static define<T>( metadata: any ){
 
         let options: IModelOptions = {
-            defaultId: "",
+            defaultId: null,
+            idField: "",
             fields: {}
         };
 
@@ -68,11 +74,65 @@ export class Model {
         }
 
         let targetClass = class X {
-            static _options: object = options;
+            static _options: IModelOptions = options;
+            private _uid: number = -1;
+            private _id: any = null;
+            private _data: object = null;
+            private _isDirty: boolean = false;
+            private _changesCallback: Function = function(){};
 
             constructor(data: Object){
+
+                this._uid = Model.getUUID();
+                // save data
+                this._data = data;
+
+                // 
+                if( X._options.idField ) {
+                    this._id = data[ X._options.idField ];
+                }
+
                 for(let memberName in data) {
-                    this[memberName] = data[memberName];
+                    // setter, getter
+                    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/set
+                    Object.defineProperty( this, memberName, {
+                        set: function(value) {
+                            let that = this;
+                            let field = X._options.fields[memberName];
+
+                            // Is memberName exist?
+                            if( !field ){
+                                throw `fieldname: ${memberName} don't exist in ${ JSON.stringify( X._options )}.`;
+                            }
+
+                            // Is editable?
+                            if( !field.editable ) {
+                                throw `fieldname: ${memberName} don't editable! in ${ JSON.stringify( field )}.`;
+                            }
+
+                            // Is nullable?
+                            if( value === null  && !field.nullable ) {
+                                throw `fieldname: ${memberName} don't allow null! in ${ JSON.stringify( field )}.`;
+                            }
+                            
+                            if( value !== that._data[memberName]){
+                                that._isDirty = true;
+                            }
+
+                            that._data[ memberName] = value;
+
+                            // emit changes
+                            that._changesCallback({
+                                target: that,
+                                field: memberName,
+                                value: value
+                            });
+                        },
+                        get: function(){
+                            let that = this;
+                            return that._data[memberName];
+                        }
+                    } );
                 }
             }
 
@@ -80,26 +140,22 @@ export class Model {
                 return X._options;
             }
 
-            get(fieldName: string): object|number|string|boolean{
-                let value = this[fieldName];
-                return value;
-            };
-            set(fieldName: string, value: object|number|string|boolean){
-                this[fieldName] = value;
-            };
-
             isNew(): boolean {
-                let id = this[ options.idField];
+                let id = this._data[ X._options.idField];
                 return id === options.defaultId;
             };
 
             editable(fieldName: string): boolean {
-                let field = (options.fields || {})[fieldName];
+                let field = (X._options.fields || {})[fieldName];
                 return field? field.editable !== false: true;
             }
 
-            changes(): Observable<object> {
-                return null;
+            changes( callback: Function): boolean {
+                if( typeof callback === "function" ) {
+                    this._changesCallback = callback;
+                    return true;
+                }
+                return false;
             }
         };
 

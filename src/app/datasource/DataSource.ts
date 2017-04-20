@@ -1,26 +1,18 @@
-import { Subject, Observable, BehaviorSubject } from 'rxjs';
 import { Model } from './Model';
-import { DataItem } from './dataitem';
-
 
 let guid = 0;
 
-export class DataSource<T> extends Subject<DataItem> {
+export class DataSource<T> {
 
-    // observable data
     private _data: Array<T> = [];
-    private _data$ = new BehaviorSubject<Array<T>>(null);
 
     // original data
     private _pristineData: Array<T> = [];
     private _pristineTotal: number = 0;
-
-    private _changes: Subject<object> = new Subject<object>();
-
     private _destroyed: Array<Object> = [];
+    private _isDirty: boolean = false;
 
     constructor(private _model: any) {
-        super();
     }
 
     // Reads data items from a remote/custom transport (if the transport option is set) or from a JavaScript array (if the data option is set).
@@ -33,14 +25,14 @@ export class DataSource<T> extends Subject<DataItem> {
     add(value: T): T {
         let obj = new this._model(value);
         this._data.push(obj);
-        this._pristineData.push(value);
-        this._changes.next(null);
+        this._isDirty = true;
         return obj;
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-insert
-    insert(index: number, value: DataItem): DataItem {
-        this._changes.next(null);
+    insert(index: number, value: T): T {
+        this._data.splice(index, 0, value);
+        this._isDirty = true;
         return value;
     }
 
@@ -48,11 +40,12 @@ export class DataSource<T> extends Subject<DataItem> {
     remove(value: object): object {
         let result = this.removeModel(this._data, value);
         this._destroyed.push(value);
+        this._isDirty = true;
         return value;
     }
 
     removeModel(items: Array<any>, model) {
-        let index: number = items.findIndex(x => x.uid === model.uid);
+        let index: number = items.findIndex(x => x._uid === model._uid);
         if (index !== -1) {
             items.splice(index, 1);
         }
@@ -61,6 +54,10 @@ export class DataSource<T> extends Subject<DataItem> {
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-hasChanges
     hasChanges(): boolean {
+        if (this._isDirty) {
+            return this._isDirty;
+        }
+
         if (this._destroyed.length) {
             return true;
         }
@@ -75,7 +72,11 @@ export class DataSource<T> extends Subject<DataItem> {
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-cancelChanges
-    cancelChanges(): Observable<Array<DataItem>> {
+    cancelChanges(): boolean {
+        if( !this._isDirty) {
+            return false;
+        }
+
         this._data = [];
         this._destroyed = [];
 
@@ -83,7 +84,7 @@ export class DataSource<T> extends Subject<DataItem> {
             this.add(item);
         })
 
-        return Observable.of([]);
+        return true;
     }
 
     destroyed() {
@@ -91,12 +92,12 @@ export class DataSource<T> extends Subject<DataItem> {
     }
 
     created() {
-        let result: Array<DataItem> = [];
+        let result: Array<T> = [];
         let data = this.data();
-        data.forEach(item => {
-            // if(item.isNew && item.isNew()) {
-            //     result.push( item);
-            //}
+        data.forEach( (item: any) => {
+            if(item.isNew && item.isNew()) {
+                 result.push( item);
+            }
         });
 
         return result;
@@ -127,25 +128,44 @@ export class DataSource<T> extends Subject<DataItem> {
      * Returns empty array if the data source hasn't been populated with data items
      */
     data(value?: Array<T>): Array<T> {
+        let that = this;
         if (value) {
             // The slice() method return a shallow copy of a portion of an array into a new array object
             // selected from begin to end (end not included). The original array will not be modified.
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice
             this._pristineData = value.slice(0);
             this._data = this._observe(value);
-            this._data$.next(this._data);
         }
 
-        return this._data;
+        return that._data;
+    }
+
+    /*
+     * Gets the data item (model) with the specified id.
+     * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-get
+     */
+    get(id: any): T {
+        let that = this;
+        let result: T = that._data.find( (x: any) => {
+            return x._id === id;
+        })
+
+        return result;
     }
 
     _observe(originalData: Array<T>): Array<T> {
-
+        let that = this;
         let _result = [];
         originalData.forEach(item => {
-            // if( item instanceof Observable)
-            _result.push(item);
+            let obj = new this._model(item);
+            obj.changes(x => {
+                if (!that._isDirty) {
+                    that._isDirty = true;
+                }
+            })
+            _result.push(obj);
         });
+        this._isDirty = false;
 
         return _result;
     }
@@ -190,18 +210,12 @@ export class DataSource<T> extends Subject<DataItem> {
      * To ensure that data is available this method should be used within the change event handler or the fetch method.
     */
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-view
-    view(): Observable<Array<DataItem>> {
-        return Observable.of([]);
+    view(): Array<T> {
+        return [];
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-total
     total(): number {
         return 0;
     }
-
-    _changeHandler() {
-
-    }
-
-
 }
