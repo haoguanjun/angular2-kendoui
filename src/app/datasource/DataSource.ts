@@ -73,7 +73,7 @@ export class DataSource<T> {
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-cancelChanges
     cancelChanges(): boolean {
-        if( !this._isDirty) {
+        if (!this._isDirty) {
             return false;
         }
 
@@ -94,9 +94,9 @@ export class DataSource<T> {
     created() {
         let result: Array<T> = [];
         let data = this.data();
-        data.forEach( (item: any) => {
-            if(item.isNew && item.isNew()) {
-                 result.push( item);
+        data.forEach((item: any) => {
+            if (item.isNew && item.isNew()) {
+                result.push(item);
             }
         });
 
@@ -107,9 +107,9 @@ export class DataSource<T> {
         let result: Array<object> = [];
         let data = this.data();
         data.forEach(item => {
-            // if( item.isNew && !item.isNew() && item.dirty) {
-            //     result.push(item);
-            // }
+            if (item.isNew && !item.isNew() && item._isDirty) {
+                result.push(item);
+            }
         });
 
         return result;
@@ -146,7 +146,7 @@ export class DataSource<T> {
      */
     get(id: any): T {
         let that = this;
-        let result: T = that._data.find( (x: any) => {
+        let result: T = that._data.find((x: any) => {
             return x._id === id;
         })
 
