@@ -60,13 +60,9 @@ export class GridSampleComponent implements OnInit {
         // this.view = this.editService.map(data => process(data, this.gridState));
 
         let data = this.myService.data();
+        console.log( data );
 
-        let gridDataResult: DataResult = {
-            data: data,
-            total: data.length
-        };
-
-        this.view = Observable.of( gridDataResult );
+        this.view = Observable.of( data );
     }
 
     public onStateChange(state: State) {

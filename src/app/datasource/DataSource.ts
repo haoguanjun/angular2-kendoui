@@ -1,7 +1,7 @@
-import { process, aggregateBy } from '@progress/kendo-data-query';
+import { process, aggregateBy, DataResult } from '@progress/kendo-data-query';
 import { orderBy, SortDescriptor } from '@progress/kendo-data-query';
 import { groupBy, GroupDescriptor } from '@progress/kendo-data-query';
-import { filterBy, FilterDescriptor } from '@progress/kendo-data-query';
+import { filterBy, FilterDescriptor, CompositeFilterDescriptor } from '@progress/kendo-data-query';
 import { Model } from './Model';
 
 let guid = 0;
@@ -15,6 +15,10 @@ export class DataSource<T> {
     private _pristineTotal: number = 0;
     private _destroyed: Array<Object> = [];
     private _isDirty: boolean = false;
+
+    private _filterOptions: CompositeFilterDescriptor;
+    private _groupOptions: Array<GroupDescriptor>;
+    private _sortOptions: Array<SortDescriptor>;
 
     constructor(private _model: any) {
     }
@@ -174,31 +178,24 @@ export class DataSource<T> {
         return _result;
     }
 
+    // Gets or sets the filter configuration.
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-filter
-    filter(options: FilterDescriptor): Array<object> {
-        let that = this;
-        let data: Array<any> = that.data();
-        let result = filterBy(data, options);
+    filter(options?: CompositeFilterDescriptor): CompositeFilterDescriptor {
+        if( options) {
+            this._filterOptions = options;
+        }
 
-        return result;
+        return this._filterOptions;
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-group
-    group(options?: Array<GroupDescriptor>): Array<object> {
-        let that = this;
-        let data: Array<any> = that.data();
-        let result = groupBy(data, options);
+    group(options?: Array<GroupDescriptor>):  Array<GroupDescriptor> {
+        if( options ) {
+            this._groupOptions = options;
+        }
 
-        return result;
+        return this._groupOptions;
     }
-
-    /*
-     * Gets or sets the filter configuration.
-     * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-filter
-     */
-    // filter(value?: object): object {
-    //     return null;
-    // }
 
     /*
      * Gets or sets the sort order which will be applied over the data items.
@@ -206,12 +203,12 @@ export class DataSource<T> {
      * Returns undefined instead of an empty array if the DataSource instance has not performed any sorting so far.
      * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-sort
      */
-    sort(options: Array<SortDescriptor>): Array<object> {
-        let that = this;
-        let data: Array<any> = that.data();
-        let result = orderBy(data, options);
+    sort(options?: Array<SortDescriptor>): Array<SortDescriptor> {
+        if(options) {
+            this._sortOptions = options;
+        }
 
-        return result;
+        return this._sortOptions;
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-pageSize
@@ -231,12 +228,19 @@ export class DataSource<T> {
      * To ensure that data is available this method should be used within the change event handler or the fetch method.
     */
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-view
-    view(): Array<T> {
-        return [];
+    view(): DataResult {
+        let that = this;
+        let data = that.data();
+        let result = process( data, {
+            group: that._groupOptions,
+            sort: that._sortOptions,
+            filter: that._filterOptions
+        });
+        return result;
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-total
     total(): number {
-        return 0;
+        return this._data.length;
     }
 }

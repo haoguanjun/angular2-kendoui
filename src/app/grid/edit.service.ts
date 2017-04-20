@@ -64,8 +64,8 @@ export class MyEditService extends BehaviorSubject<any[]> {
         this._ds.data(items);
     }
 
-    public data(): Array<any> {
-        return this._ds.data();
+    public data(): DataResult {
+        return this._ds.view();
     }
 
     public save(data: Product, isNew?: boolean) {
