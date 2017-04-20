@@ -1,3 +1,7 @@
+import { process, aggregateBy } from '@progress/kendo-data-query';
+import { orderBy, SortDescriptor } from '@progress/kendo-data-query';
+import { groupBy, GroupDescriptor } from '@progress/kendo-data-query';
+import { filterBy, FilterDescriptor } from '@progress/kendo-data-query';
 import { Model } from './Model';
 
 let guid = 0;
@@ -106,7 +110,7 @@ export class DataSource<T> {
     updated() {
         let result: Array<object> = [];
         let data = this.data();
-        data.forEach(item => {
+        data.forEach((item: any) => {
             if (item.isNew && !item.isNew() && item._isDirty) {
                 result.push(item);
             }
@@ -170,9 +174,22 @@ export class DataSource<T> {
         return _result;
     }
 
+    // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-filter
+    filter(options: FilterDescriptor): Array<object> {
+        let that = this;
+        let data: Array<any> = that.data();
+        let result = filterBy(data, options);
+
+        return result;
+    }
+
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-group
-    group(value?: object): Array<object> {
-        return [];
+    group(options?: Array<GroupDescriptor>): Array<object> {
+        let that = this;
+        let data: Array<any> = that.data();
+        let result = groupBy(data, options);
+
+        return result;
     }
 
     /*
@@ -189,8 +206,12 @@ export class DataSource<T> {
      * Returns undefined instead of an empty array if the DataSource instance has not performed any sorting so far.
      * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-sort
      */
-    sort(value: object): Array<object> {
-        return [];
+    sort(options: Array<SortDescriptor>): Array<object> {
+        let that = this;
+        let data: Array<any> = that.data();
+        let result = orderBy(data, options);
+
+        return result;
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-pageSize
