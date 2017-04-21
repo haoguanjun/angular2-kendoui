@@ -1,4 +1,5 @@
-import { process, aggregateBy, DataResult } from '@progress/kendo-data-query';
+import { process, DataResult } from '@progress/kendo-data-query';
+import { aggregateBy, AggregateDescriptor, AggregateResult } from '@progress/kendo-data-query';
 import { orderBy, SortDescriptor } from '@progress/kendo-data-query';
 import { groupBy, GroupDescriptor } from '@progress/kendo-data-query';
 import { filterBy, FilterDescriptor, CompositeFilterDescriptor } from '@progress/kendo-data-query';
@@ -16,6 +17,7 @@ export class DataSource<T> {
     private _destroyed: Array<Object> = [];
     private _isDirty: boolean = false;
 
+    private _aggregateOptions: Array<AggregateDescriptor>;
     private _filterOptions: CompositeFilterDescriptor;
     private _groupOptions: Array<GroupDescriptor>;
     private _sortOptions: Array<SortDescriptor>;
@@ -211,6 +213,30 @@ export class DataSource<T> {
         return this._sortOptions;
     }
 
+    /*
+     * Gets or sets the aggregate configuration.
+     * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-aggregate
+     */ 
+     aggregate(options?: Array<AggregateDescriptor> ): Array<AggregateDescriptor> {
+         if( options )  {
+             this._aggregateOptions = options;
+         }
+
+         return this._aggregateOptions;
+     }
+
+    /*
+     * Returns the aggregate results.
+     * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-aggregates
+     */
+    aggregates(): AggregateResult{
+        let that = this;
+        let data = that.data();
+        let result: AggregateResult = aggregateBy( data, this._aggregateOptions );
+        return result;
+    }
+
+    // Gets or sets the current page size.
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-pageSize
     pageSize(size?: number): number {
         return 0;
