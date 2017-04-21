@@ -21,6 +21,8 @@ export class DataSource<T> {
     private _filterOptions: CompositeFilterDescriptor;
     private _groupOptions: Array<GroupDescriptor>;
     private _sortOptions: Array<SortDescriptor>;
+    private _pageSize: number = 10;
+    private _pageIndex: number = 0;
 
     constructor(private _model: any) {
     }
@@ -183,7 +185,7 @@ export class DataSource<T> {
     // Gets or sets the filter configuration.
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-filter
     filter(options?: CompositeFilterDescriptor): CompositeFilterDescriptor {
-        if( options) {
+        if (options) {
             this._filterOptions = options;
         }
 
@@ -191,8 +193,8 @@ export class DataSource<T> {
     }
 
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-group
-    group(options?: Array<GroupDescriptor>):  Array<GroupDescriptor> {
-        if( options ) {
+    group(options?: Array<GroupDescriptor>): Array<GroupDescriptor> {
+        if (options) {
             this._groupOptions = options;
         }
 
@@ -206,7 +208,7 @@ export class DataSource<T> {
      * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-sort
      */
     sort(options?: Array<SortDescriptor>): Array<SortDescriptor> {
-        if(options) {
+        if (options) {
             this._sortOptions = options;
         }
 
@@ -216,36 +218,56 @@ export class DataSource<T> {
     /*
      * Gets or sets the aggregate configuration.
      * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-aggregate
-     */ 
-     aggregate(options?: Array<AggregateDescriptor> ): Array<AggregateDescriptor> {
-         if( options )  {
-             this._aggregateOptions = options;
-         }
+     */
+    aggregate(options?: Array<AggregateDescriptor>): Array<AggregateDescriptor> {
+        if (options) {
+            this._aggregateOptions = options;
+        }
 
-         return this._aggregateOptions;
-     }
+        return this._aggregateOptions;
+    }
 
     /*
      * Returns the aggregate results.
      * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-aggregates
      */
-    aggregates(): AggregateResult{
+    aggregates(): AggregateResult {
         let that = this;
         let data = that.data();
-        let result: AggregateResult = aggregateBy( data, this._aggregateOptions );
+        let result: AggregateResult = aggregateBy(data, this._aggregateOptions);
         return result;
     }
 
+    /*
+     * Gets or sets the current page.
+     * http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-page
+     */
+    page(newPageIndex?: number): number {
+        if (newPageIndex) {
+            this._pageIndex = newPageIndex;
+        }
+        return this._pageIndex;
+    }
+
+
+
     // Gets or sets the current page size.
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-pageSize
-    pageSize(size?: number): number {
-        return 0;
+    pageSize(newPageSize?: number): number {
+        if (newPageSize) {
+            this._pageSize = newPageSize;
+        }
+        return this._pageSize;
     }
 
     // Gets the number of available pages.
     // http://docs.telerik.com/kendo-ui/api/javascript/data/datasource#methods-totalPages
     totalPages(): number {
-        return 0;
+        let that = this;
+        let pageSize: number = that.pageSize() || that.total();
+        let count: number = Math.ceil( ( that.total() || 0 ) / that._pageSize );
+        console.log( count );
+        return count;
     }
 
     /*
@@ -257,11 +279,34 @@ export class DataSource<T> {
     view(): DataResult {
         let that = this;
         let data = that.data();
-        let result = process( data, {
+        let stage1 = process(data, {
             group: that._groupOptions,
             sort: that._sortOptions,
             filter: that._filterOptions
         });
+
+        // currently, we need do paging by self.
+        let result = that.paging(stage1)
+        return result;
+    }
+
+    paging(source: DataResult): DataResult {
+        let that = this;
+        let pageSize: number = that.pageSize() || that.total();
+        if( that.page() < 0 || that.page() > that.totalPages() ) {
+            throw `page index out of range!`;
+        }
+
+        let result: DataResult = {
+            data: [],
+            total: 0
+        };
+
+        for(let index = that.page() * pageSize; index < Math.min( that.total(), (that.page() + 1) * pageSize ); index++){
+            result.data.push( source.data[index]);
+            result.total++
+        }
+
         return result;
     }
 
